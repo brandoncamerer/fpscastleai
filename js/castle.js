@@ -237,8 +237,10 @@ export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight
       
       const flagGeometry = new THREE.PlaneGeometry(8, 5);
       const flag = new THREE.Mesh(flagGeometry, flagMaterial);
-      flag.position.set(0, poleHeight / 2 - 2.5, 4);
-      flag.rotation.y = Math.PI / 2;
+      // Shift the flag to the right a bit (X-offset) so it looks like it comes off the pole.
+      flag.position.set(4, poleHeight / 2 - 3.5, 0.6);
+      // Rotate the flag by 180° so it faces outward.
+      flag.rotation.y = Math.PI;
       pole.add(flag);
     }
   });

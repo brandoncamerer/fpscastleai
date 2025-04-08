@@ -1,4 +1,4 @@
-import { initEnvironment } from "./environment.js";
+import { initEnvironment, updateClouds } from "./environment.js";
 import { initObstacles } from "./obstacles.js";
 import { buildCastle } from "./castle.js"; // castle.js must add three panels (name "castlePanel"), a screen ("castleScreen"), and mark walls ("castleWall")
 import { initControls } from "./controls.js";
@@ -58,6 +58,11 @@ function init() {
   // Add distant mountains.
   createMountains();
 
+  // Add special object.
+  const specialObj = createSpecialObject(flatTerrain);
+  specialObj.position.set(-170, flatTerrain(200, -250) + 2.5, -210);
+  scene.add(specialObj);
+
   // --- Overall Lighting Setup ---
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
   scene.add(ambientLight);
@@ -82,6 +87,12 @@ function onWindowResize() {
 function spawnCastles() {
   const castleCount = 3;
   const radius = 200;
+  const bannerTexts = [
+    "Image Generation",
+    "Code Generation",
+    "Text Generation"
+  ];
+  
   for (let i = 0; i < castleCount; i++) {
     const angle = (i / castleCount) * 2 * Math.PI;
     const pos = new THREE.Vector3(
@@ -90,18 +101,17 @@ function spawnCastles() {
       Math.sin(angle) * radius
     );
     const castleWallBounds = [];
-    // Build a new castle for each index using buildCastle.
     const castle = buildCastle(scene, obstacles, castleWallBounds, flatTerrain, pos, i);
     castle.position.copy(pos);
-    // Rotate castle so its front (assumed local +Z) faces the center (0,0).
     castle.rotation.y = Math.atan2(-pos.x, -pos.z);
-    castle.updateMatrixWorld(true);  // Force update.
+    castle.updateMatrixWorld(true);
     scene.add(castle);
-    // Optionally add a point light inside the castle.
+
     const castleLight = new THREE.PointLight(0xffffff, 1.5, 300);
     castleLight.position.set(0, 50, 0);
     castle.add(castleLight);
-    // Traverse castle children to store references.
+
+    // Traverse castle children and store references.
     castle.traverse(child => {
       if (child.isMesh) {
         if (child.name === "castleWall") {
@@ -112,8 +122,6 @@ function spawnCastles() {
           });
           child.userData.castleIndex = i;
           castleWalls.push(child);
-          // const helper = new THREE.BoxHelper(child, 0xff0000);
-          // scene.add(helper);
         }
         if (child.name === "castlePanel") {
           castlePanels.push(child);
@@ -123,6 +131,19 @@ function spawnCastles() {
         }
       }
     });
+  
+    // Retrieve a stone color from one of the castle walls.
+    let bannerTextColor = "#ffffff";
+    const wall = castle.getObjectByName("castleWall");
+    if (wall && wall.material && wall.material.color) {
+      bannerTextColor = '#' + wall.material.color.getHexString();
+    }
+  
+    // Create and add the banner.
+    const banner = createBanner(bannerTexts[i], bannerTextColor);
+    // Lower the banner's Y position to be just under the castle walls.
+    banner.position.set(0, 45, 62); // Adjust Y from 65 to 40.
+    castle.add(banner);
   }
 }
 
@@ -274,9 +295,13 @@ function handleRockPickup() {
 
 function animate() {
   requestAnimationFrame(animate);
+  
   const t = performance.now();
   const delta = (t - prevTime) / 1000;
-
+  
+  // update clouds' positions
+  updateClouds(delta);
+  
   if (controls.isLocked) {
     const player = controls.getObject();
     const oldPos = player.position.clone();
@@ -381,6 +406,87 @@ function collides(pos) {
     }
   }
   return false;
+}
+
+function createBanner(text) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 48;
+  const ctx = canvas.getContext("2d");
+
+  // Deep red gradient background
+  const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  bgGradient.addColorStop(0, "#4b0000");
+  bgGradient.addColorStop(1, "#1a0000");
+  ctx.fillStyle = bgGradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Golden trim border
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "#C9B037";
+  ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+  // Enhanced text styling
+  ctx.font = "bold 24px 'Old English Text MT', 'Uncial Antiqua', serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  // Glow + shadow
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
+  ctx.shadowBlur = 6;
+  ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
+
+  // Stroke for text outline
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "#000000";
+  ctx.strokeText(text, canvas.width / 2, canvas.height / 2);
+
+  // Gold gradient text
+  const textGradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+  textGradient.addColorStop(0, "#fff1a8");  // light gold
+  textGradient.addColorStop(0.5, "#FFD700"); // classic gold
+  textGradient.addColorStop(1, "#b8860b");  // darker gold
+  ctx.fillStyle = textGradient;
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+
+  const geometry = new THREE.PlaneGeometry(80, 15);
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    side: THREE.DoubleSide,
+    transparent: true
+  });
+
+  const banner = new THREE.Mesh(geometry, material);
+  return banner;
+}
+
+function createSpecialObject(getTerrainHeight) {
+  // Create a pedestal.
+  const pedestalGeo = new THREE.CylinderGeometry(3, 3, 5, 16);
+  const pedestalMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
+  const pedestal = new THREE.Mesh(pedestalGeo, pedestalMat);
+  pedestal.castShadow = true;
+  pedestal.receiveShadow = true;
+  
+  // Create a glowing orb on top.
+  const orbGeo = new THREE.SphereGeometry(2, 16, 16);
+  const orbMat = new THREE.MeshStandardMaterial({ 
+    color: 0x00ffff,
+    emissive: 0x00ffff,
+    emissiveIntensity: 1,
+    transparent: true,
+    opacity: 0.9
+  });
+  const orb = new THREE.Mesh(orbGeo, orbMat);
+  orb.position.set(0, 4, 0);
+  orb.castShadow = true;
+  pedestal.add(orb);
+  
+  return pedestal;
 }
 
 init();

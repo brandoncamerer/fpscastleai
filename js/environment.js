@@ -1,3 +1,6 @@
+// Global array to store clouds so we can update them later.
+export const clouds = [];
+
 export function initEnvironment(scene, getTerrainHeight) {
   // Ocean.
   const ocean = new THREE.Mesh(
@@ -145,27 +148,41 @@ scene.add(islandMesh);
   scene.add(sunGlow);
 
   // Clouds.
-  for (let i = 0; i < 5; i++) {
-    addCloud(scene);
+  // Increase the count from 5 to 10 (or more if desired).
+  for (let i = 0; i < 10; i++) {
+    let cloud = createCloud();
+    // Position cloud using a random angle/distance, then add an additional offset.
+    let a = Math.random() * 2 * Math.PI;
+    let d = 700 + Math.random() * 200;
+    cloud.position.set(Math.cos(a) * d + 10, 300 + Math.random() * 50, Math.sin(a) * d);
+    scene.add(cloud);
+    clouds.push(cloud);
   }
 }
 
 function createCloud() {
-  let group = new THREE.Group();
-  let material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  let s1 = new THREE.Mesh(new THREE.SphereGeometry(20, 8, 8), material);
-  let s2 = new THREE.Mesh(new THREE.SphereGeometry(25, 8, 8), material);
-  let s3 = new THREE.Mesh(new THREE.SphereGeometry(20, 8, 8), material);
-  s2.position.set(25, 10, 5);
-  s3.position.set(-25, 8, -5);
-  group.add(s1, s2, s3);
-  return group;
+  const cloudTexture = new THREE.TextureLoader().load('./images/CloudFit_WhiteCloud.png');
+  const spriteMaterial = new THREE.SpriteMaterial({ map: cloudTexture, transparent: true });
+  const cloudSprite = new THREE.Sprite(spriteMaterial);
+  // Increase the scale to make the cloud bigger.
+  cloudSprite.scale.set(80, 50, 1); // Adjust values as needed.
+  // Optionally offset the cloud or leave its position at (0,0,0) here,
+  // then let the addCloud logic set its world position.
+  // e.g. cloudSprite.position.set(10, 0, 0);
+  return cloudSprite;
 }
 
-function addCloud(scene) {
-  let cloud = createCloud();
-  let a = Math.random() * 2 * Math.PI;
-  let d = 700 + Math.random() * 200;
-  cloud.position.set(Math.cos(a) * d, 300 + Math.random() * 50, Math.sin(a) * d);
-  scene.add(cloud);
+// Call this update function from your animate loop in main.js:
+export function updateClouds(delta) {
+  // delta: time elapsed since last frame.
+  // Adjust cloud speed as needed.
+  const speed = 10; // units per second
+  for (let cloud of clouds) {
+    // Move the cloud slowly along X (or any axis, or even using a vector).
+    cloud.position.x += speed * delta;
+    // Optionally, if cloud moves too far right, wrap it back to left.
+    if (cloud.position.x > 1000) {
+      cloud.position.x = -1000;
+    }
+  }
 }
