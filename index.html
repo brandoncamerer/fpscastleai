@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Optimized 3D FPS Game with Castle</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Include Three.js and PointerLockControls from CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+  </head>
+  <body>
+    <div id="blocker">
+      <div id="instructions">Click to play</div>
+    </div>
+    <!-- Rock Counter Display with Icon -->
+    
+    <!-- Castle Health Bar (hidden until castle is built) -->
+    <div id="castleHealthContainer">
+      <span>Castle:</span>
+      <div id="castleHealthBar"></div>
+    </div>
+    <!-- Game Over Display -->
+    <div id="gameOver">Game Over</div>
+    <!-- Castle Build Popup -->
+    <div id="castlePopup">
+      <div class="modalContent">
+        <h2>Build Your Epic Castle</h2>
+        <img src="https://img.icons8.com/fluency/96/000000/castle.png" alt="Epic Castle" />
+        <button id="buildButton">Build</button>
+      </div>
+    </div>
+    <!-- Invasion Countdown HUD -->
+    <div id="invasionCountdown" style="display: none;">Invasion starts in 5 seconds...</div>
+    
+    <!-- Main JavaScript (using modules) -->
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

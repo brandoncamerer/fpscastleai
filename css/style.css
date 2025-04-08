@@ -1,0 +1,149 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+  canvas {
+    display: block;
+  }
+  #blocker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  #instructions {
+    font-size: 24px;
+    color: #fff;
+    text-align: center;
+    cursor: pointer;
+  }
+  /* Rock counter UI */
+  #rockCounter {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 20px;
+    color: #fff;
+    z-index: 101;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+  #rockCounter img {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+  }
+  /* Modern Castle Health Bar (hidden until castle is built) */
+  #castleHealthContainer {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 250px;
+    height: 30px;
+    background: #222;
+    border-radius: 15px;
+    z-index: 101;
+    display: none;
+    padding: 5px 10px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    align-items: center;
+  }
+  #castleHealthContainer span {
+    color: #fff;
+    font-size: 16px;
+    margin-right: 10px;
+  }
+  #castleHealthBar {
+    width: 100%;
+    height: 100%;
+    background: limegreen;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+  }
+  /* Game Over UI */
+  #gameOver {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 64px;
+    color: red;
+    z-index: 104;
+    display: none;
+  }
+  /* Castle Build Popup with custom fancy cursor */
+  #castlePopup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 102;
+    display: none;
+    cursor: url('https://img.icons8.com/color/48/000000/cursor.png'), auto;
+  }
+  #castlePopup .modalContent {
+    background: #fff;
+    padding: 20px 30px;
+    border-radius: 10px;
+    text-align: center;
+    width: 300px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  #castlePopup .modalContent h2 {
+    margin: 0 0 20px;
+    font-size: 24px;
+    color: #333;
+  }
+  #castlePopup .modalContent img {
+    max-width: 200px;
+    width: 100%;
+    display: block;
+    margin: 0 auto 20px;
+  }
+  #castlePopup .modalContent button {
+    background: linear-gradient(45deg, #ff7f50, #ff4500);
+    border: none;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  }
+  #castlePopup .modalContent button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+  }
+  /* Invasion Countdown HUD */
+  #invasionCountdown {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    color: #fff;
+    z-index: 103;
+    text-align: center;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+    white-space: nowrap;
+  }
