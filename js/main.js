@@ -251,11 +251,13 @@ function onKeyUp(e) {
 
 function handleInteraction() {
   const playerPos = controls.getObject().position;
+  const interactionDistance = 25; // increased from 15 to 25
+
   // First check castle panels.
   for (let i = 0; i < castlePanels.length; i++) {
     let panelPos = new THREE.Vector3();
     castlePanels[i].getWorldPosition(panelPos);
-    if (playerPos.distanceTo(panelPos) < 15) {
+    if (playerPos.distanceTo(panelPos) < interactionDistance) {
       if (castlePanels[i].userData.url) {
         window.open(castlePanels[i].userData.url, "_blank");
       } else {
@@ -268,7 +270,7 @@ function handleInteraction() {
   for (let i = 0; i < castleScreens.length; i++) {
     let screenPos = new THREE.Vector3();
     castleScreens[i].getWorldPosition(screenPos);
-    if (playerPos.distanceTo(screenPos) < 15) {
+    if (playerPos.distanceTo(screenPos) < interactionDistance) {
       console.log("Castle screen interaction triggered.");
       return;
     }
@@ -485,6 +487,33 @@ function createSpecialObject(getTerrainHeight) {
   orb.position.set(0, 4, 0);
   orb.castShadow = true;
   pedestal.add(orb);
+  
+  // Create a text label "5 AwardCo Points" above the special object as a sprite.
+  const labelCanvas = document.createElement("canvas");
+  labelCanvas.width = 512;   // Increase resolution for larger text.
+  labelCanvas.height = 128;
+  const ctx = labelCanvas.getContext("2d");
+  ctx.font = "30px sans-serif";  // Increase font size.
+  ctx.fillStyle = "white";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("5 AwardCo Points", labelCanvas.width / 2, labelCanvas.height / 2);
+  
+  const labelTexture = new THREE.CanvasTexture(labelCanvas);
+  labelTexture.needsUpdate = true;
+  
+  const spriteMaterial = new THREE.SpriteMaterial({
+    map: labelTexture,
+    transparent: true,
+    depthTest: true  // Now occluded by other objects
+  });
+  
+  const labelSprite = new THREE.Sprite(spriteMaterial);
+  // Increase the scale to make the text bigger.
+  labelSprite.scale.set(12, 4, 1);  // Adjust values as needed
+  // Position the label farther above the orb.
+  labelSprite.position.set(0, 9, 0);
+  pedestal.add(labelSprite);
   
   return pedestal;
 }

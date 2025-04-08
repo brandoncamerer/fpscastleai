@@ -193,61 +193,74 @@ export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight
   
   // --- Corner Towers (Pillars) ---
   const towerMaterial = stoneMaterial;
-  const towerGeometry = new THREE.CylinderGeometry(towerRadius, towerRadius, towerHeight, 16);
+  const originalTowerRadius = 10;
+  const originalTowerHeight = 55;
   const towerPositions = [
-    new THREE.Vector3(-halfSize + towerRadius, towerY, -halfSize + towerRadius),
-    new THREE.Vector3(halfSize - towerRadius, towerY, -halfSize + towerRadius),
-    new THREE.Vector3(-halfSize + towerRadius, towerY, halfSize - towerRadius),
-    new THREE.Vector3(halfSize - towerRadius, towerY, halfSize - towerRadius)
+    new THREE.Vector3(-halfSize + originalTowerRadius, floorThickness + originalTowerHeight / 2, -halfSize + originalTowerRadius),
+    new THREE.Vector3(halfSize - originalTowerRadius, floorThickness + originalTowerHeight / 2, -halfSize + originalTowerRadius),
+    new THREE.Vector3(-halfSize + originalTowerRadius, floorThickness + originalTowerHeight / 2, halfSize - originalTowerRadius),
+    new THREE.Vector3(halfSize - originalTowerRadius, floorThickness + originalTowerHeight / 2, halfSize - originalTowerRadius)
   ];
-  
+
   towerPositions.forEach((pos, index) => {
-    const tower = new THREE.Mesh(towerGeometry, towerMaterial);
+    let currentTowerRadius = originalTowerRadius;
+    let currentTowerHeight = originalTowerHeight;
+    // For front pillars (index 2 and 3), make them taller and wider.
+    if (index >= 2) {
+      currentTowerRadius = 14;
+      currentTowerHeight = 70;
+      // Adjust the y position for front towers.
+      pos.y = floorThickness + currentTowerHeight / 2;
+    }
+    const towerGeo = new THREE.CylinderGeometry(currentTowerRadius, currentTowerRadius, currentTowerHeight, 16);
+    const tower = new THREE.Mesh(towerGeo, towerMaterial);
     tower.position.copy(pos);
     tower.name = "castlePillar";
     tower.castShadow = true;
     tower.receiveShadow = true;
     castle.add(tower);
-    
+
     // Tower battlements.
     const numBattlementSections = 8;
     for (let i = 0; i < numBattlementSections; i++) {
       const angle = (i / numBattlementSections) * Math.PI * 2;
       const merlonGeometry = new THREE.BoxGeometry(battlementSegment * 1.5, battlementHeight, wallThickness * 0.5);
       const merlon = new THREE.Mesh(merlonGeometry, battlementMaterial);
-      const radiusOffset = towerRadius - wallThickness * 0.25;
+      const radiusOffset = currentTowerRadius - wallThickness * 0.25;
+      // Determine the battlement y position.
+      const towerTopY = (index >= 2)
+        ? (floorThickness + currentTowerHeight + battlementHeight / 2)
+        : (floorThickness + originalTowerHeight + battlementHeight / 2);
       merlon.position.set(
         pos.x + Math.cos(angle) * radiusOffset,
-        towerY + towerHeight / 2 + battlementHeight / 2,
+        towerTopY,
         pos.z + Math.sin(angle) * radiusOffset
       );
       merlon.rotation.y = angle + Math.PI / 2;
       merlon.castShadow = true;
       castle.add(merlon);
     }
-    
-    // Add flag on front towers only.
+
+    // Add flag only on front towers.
     if (index >= 2) {
       const poleHeight = 15;
       const poleGeometry = new THREE.CylinderGeometry(0.5, 0.5, poleHeight, 8);
       const pole = new THREE.Mesh(poleGeometry, woodMaterial);
-      pole.position.set(pos.x, towerY + towerHeight / 2 + poleHeight / 2, pos.z);
+      pole.position.set(pos.x, floorThickness + currentTowerHeight + poleHeight / 2, pos.z);
       pole.castShadow = true;
       castle.add(pole);
-      
+
       const flagGeometry = new THREE.PlaneGeometry(8, 5);
       const flag = new THREE.Mesh(flagGeometry, flagMaterial);
-      // Shift the flag to the right a bit (X-offset) so it looks like it comes off the pole.
       flag.position.set(4, poleHeight / 2 - 3.5, 0.6);
-      // Rotate the flag by 180° so it faces outward.
       flag.rotation.y = Math.PI;
       pole.add(flag);
     }
   });
-  
+
   // --- Add Interactive Panels ("TVs") ---
   const panelImages = [
-    "https://dummyimage.com/512x512/ffffff/000000.png?text=Screen+1",
+    "https://cloudfitsoftware.com/img/industries.jpg",
     "https://dummyimage.com/512x512/ffffff/000000.png?text=Screen+2",
     "https://dummyimage.com/512x512/ffffff/000000.png?text=Screen+3",
     "https://dummyimage.com/512x512/ffffff/000000.png?text=Screen+4",
