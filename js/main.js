@@ -22,20 +22,6 @@ const GRAVITY = 392;
 const playerRadius = 5;
 
 function init() {
-  // Create an instruction element.
-  const instruction = document.createElement("div");
-  instruction.id = "instruction";
-  instruction.innerText =
-    "Press E to interact (pick up rock, use castle panel/screen), click to throw rock";
-  instruction.style.position = "absolute";
-  instruction.style.bottom = "20px";
-  instruction.style.left = "20px";
-  instruction.style.color = "#fff";
-  instruction.style.fontSize = "24px";
-  instruction.style.padding = "12px 20px";
-  instruction.style.background = "rgba(0, 0, 0, 0.5)";
-  instruction.style.zIndex = "102";
-  document.body.appendChild(instruction);
 
   // Set up scene, camera, and renderer.
   scene = new THREE.Scene();
