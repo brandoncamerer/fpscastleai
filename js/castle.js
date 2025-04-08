@@ -22,12 +22,12 @@ function createBattlements(width, depth, height, segmentLength, gapLength, mater
 }
 
 // Export buildCastle; note towers are now named "castlePillar" so they won't be included in collision checks.
-export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight, castlePosition = new THREE.Vector3(0, 0, 0)) {
+export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight, castlePosition = new THREE.Vector3(0, 0, 0), castleIndex = 0) {
   const floorSize = 120;
   const margin = 20;
   const groundLevel = getTerrainHeight(castlePosition.x, castlePosition.z);
   
-  // --- Clear Obstacles ---
+  // Clear nearby obstacles.
   for (let i = obstacles.length - 1; i >= 0; i--) {
     if (obstacles[i].type === "tree" || obstacles[i].type === "rock") {
       const distSq = (obstacles[i].x - castlePosition.x) ** 2 + (obstacles[i].z - castlePosition.z) ** 2;
@@ -44,9 +44,12 @@ export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight
   }
   
   const castle = new THREE.Group();
-
+  castle.name = "Castle " + (castleIndex + 1);
+  
   // --- Materials ---
-  const stoneColor = 0x6a6a6a;
+  // Vary stone color using HSL (giving a different hue for each castle)
+  const baseHue = (castleIndex * 0.33) % 1.0;
+  const stoneColor = new THREE.Color().setHSL(baseHue, 0.5, 0.5).getHex();
   const floorColor = 0x7d7d7d;
   const woodColor = 0x8B4513;
   const flagColor = 0xFF0000;
@@ -58,6 +61,7 @@ export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight
   const flagMaterial = new THREE.MeshBasicMaterial({ color: flagColor, side: THREE.DoubleSide });
   const panelMaterialBase = new THREE.MeshBasicMaterial({ color: panelColor, side: THREE.DoubleSide });
   const textureLoader = new THREE.TextureLoader();
+  textureLoader.crossOrigin = "anonymous";
   
   // --- Dimensions ---
   const floorThickness = 3;
@@ -69,6 +73,10 @@ export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight
   const battlementHeight = 4;
   const battlementSegment = 3;
   const battlementGap = 2;
+  
+  // Panel dimensions.
+  const panelWidth = 50;
+  const panelHeight = 20;
   
   const halfSize = floorSize / 2;
   const floorY = floorThickness / 2;
@@ -84,19 +92,26 @@ export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight
   floorMesh.receiveShadow = true;
   castle.add(floorMesh);
   
-  const addWallBounds = (minX, maxX, minZ, maxZ) => { castleWallBounds.push({ minX, maxX, minZ, maxZ }); };
+  const addWallBounds = (minX, maxX, minZ, maxZ) => castleWallBounds.push({ minX, maxX, minZ, maxZ });
   const battlementMaterial = stoneMaterial;
   
   // --- Back Wall ---
   const backGeometry = new THREE.BoxGeometry(floorSize - 2 * towerRadius, wallHeight, wallThickness);
+  backGeometry.center(); // Ensure the geometry is centered
   const backWall = new THREE.Mesh(backGeometry, stoneMaterial);
   backWall.position.set(0, wallY, -halfSize + wallThickness / 2);
   backWall.name = "castleWall";
+  backWall.userData.castleIndex = castleIndex;
+  backWall.userData.blockCollision = true;
+  backWall.userData.collider = { 
+    halfSize: new THREE.Vector3((floorSize - 2 * towerRadius) / 2, wallHeight / 2, wallThickness / 2) 
+  };
   backWall.castShadow = true;
   backWall.receiveShadow = true;
   castle.add(backWall);
   addWallBounds(-halfSize + towerRadius, halfSize - towerRadius, -halfSize, -halfSize + wallThickness);
   
+  // Back battlements.
   const backBattlements = createBattlements(floorSize - 2 * towerRadius, wallThickness, battlementHeight, battlementSegment, battlementGap, battlementMaterial);
   backBattlements.position.set(0, wallY + wallHeight / 2, -halfSize + wallThickness / 2);
   castle.add(backBattlements);
@@ -107,8 +122,12 @@ export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight
   
   const frontLeftGeometry = new THREE.BoxGeometry(segmentWidth, gatehouseHeight, wallThickness);
   const frontLeft = new THREE.Mesh(frontLeftGeometry, stoneMaterial);
+  frontLeft.userData.collider = {
+    halfSize: new THREE.Vector3(segmentWidth / 2, gatehouseHeight / 2, wallThickness / 2)
+  };
   frontLeft.position.set(-towerRadius - openingWidth / 2 - segmentWidth / 2, gatehouseY, halfSize - wallThickness / 2);
   frontLeft.name = "castleWall";
+  frontLeft.userData.castleIndex = castleIndex;
   frontLeft.castShadow = true;
   frontLeft.receiveShadow = true;
   castle.add(frontLeft);
@@ -120,8 +139,12 @@ export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight
   
   const frontRightGeometry = new THREE.BoxGeometry(segmentWidth, gatehouseHeight, wallThickness);
   const frontRight = new THREE.Mesh(frontRightGeometry, stoneMaterial);
+  frontRight.userData.collider = {
+    halfSize: new THREE.Vector3(segmentWidth / 2, gatehouseHeight / 2, wallThickness / 2)
+  };
   frontRight.position.set(towerRadius + openingWidth / 2 + segmentWidth / 2, gatehouseY, halfSize - wallThickness / 2);
   frontRight.name = "castleWall";
+  frontRight.userData.castleIndex = castleIndex;
   frontRight.castShadow = true;
   frontRight.receiveShadow = true;
   castle.add(frontRight);
@@ -134,8 +157,12 @@ export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight
   // --- Left Wall ---
   const sideGeometry = new THREE.BoxGeometry(wallThickness, wallHeight, floorSize - 2 * towerRadius);
   const leftWall = new THREE.Mesh(sideGeometry, stoneMaterial);
+  leftWall.userData.collider = {
+    halfSize: new THREE.Vector3(wallThickness / 2, wallHeight / 2, (floorSize - 2 * towerRadius) / 2)
+  };
   leftWall.position.set(-halfSize + wallThickness / 2, wallY, 0);
   leftWall.name = "castleWall";
+  leftWall.userData.castleIndex = castleIndex;
   leftWall.castShadow = true;
   leftWall.receiveShadow = true;
   castle.add(leftWall);
@@ -148,8 +175,12 @@ export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight
   
   // --- Right Wall ---
   const rightWall = new THREE.Mesh(sideGeometry, stoneMaterial);
+  rightWall.userData.collider = {
+    halfSize: new THREE.Vector3(wallThickness / 2, wallHeight / 2, (floorSize - 2 * towerRadius) / 2)
+  };
   rightWall.position.set(halfSize - wallThickness / 2, wallY, 0);
   rightWall.name = "castleWall";
+  rightWall.userData.castleIndex = castleIndex;
   rightWall.castShadow = true;
   rightWall.receiveShadow = true;
   castle.add(rightWall);
@@ -173,13 +204,12 @@ export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight
   towerPositions.forEach((pos, index) => {
     const tower = new THREE.Mesh(towerGeometry, towerMaterial);
     tower.position.copy(pos);
-    // Mark towers as "castlePillar" so they're excluded from collision checks.
     tower.name = "castlePillar";
     tower.castShadow = true;
     tower.receiveShadow = true;
     castle.add(tower);
-  
-    // Tower Battlements.
+    
+    // Tower battlements.
     const numBattlementSections = 8;
     for (let i = 0; i < numBattlementSections; i++) {
       const angle = (i / numBattlementSections) * Math.PI * 2;
@@ -195,8 +225,8 @@ export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight
       merlon.castShadow = true;
       castle.add(merlon);
     }
-  
-    // Add Flag to front towers only.
+    
+    // Add flag on front towers only.
     if (index >= 2) {
       const poleHeight = 15;
       const poleGeometry = new THREE.CylinderGeometry(0.5, 0.5, poleHeight, 8);
@@ -204,57 +234,79 @@ export function buildCastle(scene, obstacles, castleWallBounds, getTerrainHeight
       pole.position.set(pos.x, towerY + towerHeight / 2 + poleHeight / 2, pos.z);
       pole.castShadow = true;
       castle.add(pole);
-  
+      
       const flagGeometry = new THREE.PlaneGeometry(8, 5);
       const flag = new THREE.Mesh(flagGeometry, flagMaterial);
       flag.position.set(0, poleHeight / 2 - 2.5, 4);
       flag.rotation.y = Math.PI / 2;
       pole.add(flag);
     }
-  
-    // Note: Towers (now "castlePillar") are not added to castleWallBounds.
   });
   
   // --- Add Interactive Panels ("TVs") ---
-  const panelWidth = 50;
-  const panelHeight = 20;
-  const panelGeometry = new THREE.PlaneGeometry(panelWidth, panelHeight);
+  const panelImages = [
+    "https://dummyimage.com/512x512/ffffff/000000.png?text=Screen+1",
+    "https://dummyimage.com/512x512/ffffff/000000.png?text=Screen+2",
+    "https://dummyimage.com/512x512/ffffff/000000.png?text=Screen+3",
+    "https://dummyimage.com/512x512/ffffff/000000.png?text=Screen+4",
+    "https://dummyimage.com/512x512/ffffff/000000.png?text=Screen+5",
+    "https://dummyimage.com/512x512/ffffff/000000.png?text=Screen+6",
+    "https://dummyimage.com/512x512/ffffff/000000.png?text=Screen+7",
+    "https://dummyimage.com/512x512/ffffff/000000.png?text=Screen+8",
+    "https://dummyimage.com/512x512/ffffff/000000.png?text=Screen+9"
+  ];
   
-  const panelTextureLeft = textureLoader.load("https://via.placeholder.com/512/FFFFFF/0000FF?text=Project+Alpha");
-  const panelTextureRight = textureLoader.load("https://via.placeholder.com/512/FFFFFF/FF0000?text=Project+Beta");
-  const panelTextureBack = textureLoader.load("https://via.placeholder.com/512/FFFFFF/00AA00?text=Project+Gamma");
-  
-  const panelMaterialLeft = new THREE.MeshBasicMaterial({ color: panelColor, map: panelTextureLeft, side: THREE.DoubleSide });
-  const panelMaterialRight = new THREE.MeshBasicMaterial({ color: panelColor, map: panelTextureRight, side: THREE.DoubleSide });
-  const panelMaterialBack = new THREE.MeshBasicMaterial({ color: panelColor, map: panelTextureBack, side: THREE.DoubleSide });
-  
-  // Move panels higher: set panel Y position to floorThickness + 25.
+  // Place one panel per wall: left, right, back.
   const panelY = floorThickness + 25;
+  const offset = 2;
+  const leftPanelPos = new THREE.Vector3(-halfSize + wallThickness + offset, panelY, 0);
+  const rightPanelPos = new THREE.Vector3(halfSize - wallThickness - offset, panelY, 0);
+  const backPanelPos = new THREE.Vector3(0, panelY, -halfSize + wallThickness + offset);
   
-  // Left Panel (on the interior side of the left wall)
-  const panelLeft = new THREE.Mesh(panelGeometry, panelMaterialLeft);
-  panelLeft.name = "castlePanel";
-  panelLeft.position.set(-halfSize + wallThickness + 0.1, panelY, 0);
-  panelLeft.rotation.y = Math.PI / 2;
-  panelLeft.userData.url = "https://example.com/project_alpha";
-  castle.add(panelLeft);
+  const baseIdx = castleIndex * 3;
+  const leftImage = panelImages[baseIdx + 0];
+  const rightImage = panelImages[baseIdx + 1];
+  const backImage = panelImages[baseIdx + 2];
   
-  // Right Panel (on the interior side of the right wall)
-  const panelRight = new THREE.Mesh(panelGeometry, panelMaterialRight);
-  panelRight.name = "castlePanel";
-  panelRight.position.set(halfSize - wallThickness - 0.1, panelY, 0);
-  panelRight.rotation.y = -Math.PI / 2;
-  panelRight.userData.url = "https://example.com/project_beta";
-  castle.add(panelRight);
+  const leftTexture = textureLoader.load(leftImage);
+  const leftPanel = new THREE.Mesh(new THREE.PlaneGeometry(panelWidth, panelHeight),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, map: leftTexture, side: THREE.DoubleSide }));
+  leftPanel.position.copy(leftPanelPos);
+  leftPanel.rotation.y = Math.PI / 2;
+  leftPanel.userData.url = "https://example.com/project_alpha";
+  leftPanel.name = "castlePanel";
+  castle.add(leftPanel);
   
-  // Back Panel (on the interior side of the back wall)
-  const panelBack = new THREE.Mesh(panelGeometry, panelMaterialBack);
-  panelBack.name = "castlePanel";
-  panelBack.position.set(0, panelY, -halfSize + wallThickness + 0.1);
-  // Rotate so that its front face (default +Z) faces inward.
-  panelBack.rotation.y = Math.PI;
-  panelBack.userData.url = "https://example.com/project_gamma";
-  castle.add(panelBack);
+  const rightTexture = textureLoader.load(rightImage);
+  const rightPanel = new THREE.Mesh(new THREE.PlaneGeometry(panelWidth, panelHeight),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, map: rightTexture, side: THREE.DoubleSide }));
+  rightPanel.position.copy(rightPanelPos);
+  rightPanel.rotation.y = -Math.PI / 2;
+  rightPanel.userData.url = "https://example.com/project_beta";
+  rightPanel.name = "castlePanel";
+  castle.add(rightPanel);
+  
+  const backTexture = textureLoader.load(backImage);
+  const backPanel = new THREE.Mesh(new THREE.PlaneGeometry(panelWidth, panelHeight),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, map: backTexture, side: THREE.DoubleSide }));
+  backPanel.position.copy(backPanelPos);
+  backPanel.rotation.y = Math.PI;
+  backPanel.userData.url = "https://example.com/project_gamma";
+  backPanel.name = "castlePanel";
+  castle.add(backPanel);
   
   return castle;
+}
+
+function collides(pos) {
+  for (let wall of castleWalls) {
+    if (wall.userData.blockCollision === false) continue;
+    let box = new THREE.Box3().setFromObject(wall);
+    box.expandByScalar(0.2);
+    if (box.containsPoint(pos)) {
+      console.log("Collision with wall:", wall.name);
+      return true;
+    }
+  }
+  return false;
 }

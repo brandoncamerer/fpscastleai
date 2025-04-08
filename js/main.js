@@ -10,9 +10,9 @@ let scene, camera, renderer, controls;
 let obstacles = [];
 let rockCount = 0; // Player may hold at most one rock.
 let thrownRocks = [];
-let castleWalls = [];   // All castle wall meshes for collision.
-let castleScreens = []; // All castle screen meshes for interaction.
-let castlePanels = [];  // All castle panel meshes for interaction.
+let castleWalls = [];   // For collisions.
+let castleScreens = []; // For interaction.
+let castlePanels = [];  // For interaction.
 
 let velocity = new THREE.Vector3();
 let direction = new THREE.Vector3();
@@ -58,7 +58,7 @@ function init() {
   // Add distant mountains.
   createMountains();
 
-  // --- Overall Lighting Setup (Old Setup) ---
+  // --- Overall Lighting Setup ---
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
   scene.add(ambientLight);
   const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -90,34 +90,36 @@ function spawnCastles() {
       Math.sin(angle) * radius
     );
     const castleWallBounds = [];
-    // Build the castle; buildCastle should remove obstacles within its area and create panels.
-    const castle = buildCastle(scene, obstacles, castleWallBounds, flatTerrain, pos);
+    // Build a new castle for each index using buildCastle.
+    const castle = buildCastle(scene, obstacles, castleWallBounds, flatTerrain, pos, i);
     castle.position.copy(pos);
     // Rotate castle so its front (assumed local +Z) faces the center (0,0).
-    let dx = -pos.x, dz = -pos.z;
-    castle.rotation.y = Math.atan2(dx, dz);
+    castle.rotation.y = Math.atan2(-pos.x, -pos.z);
+    castle.updateMatrixWorld(true);  // Force update.
     scene.add(castle);
-    // Optionally add a point light inside each castle.
+    // Optionally add a point light inside the castle.
     const castleLight = new THREE.PointLight(0xffffff, 1.5, 300);
     castleLight.position.set(0, 50, 0);
     castle.add(castleLight);
-    // Traverse castle children.
+    // Traverse castle children to store references.
     castle.traverse(child => {
       if (child.isMesh) {
         if (child.name === "castleWall") {
-          // Replace wall material with a lighter variant.
           child.material = new THREE.MeshLambertMaterial({
             color: 0x777777,
             emissive: 0x222222,
             emissiveIntensity: 0.5
           });
+          child.userData.castleIndex = i;
           castleWalls.push(child);
-        }
-        if (child.name === "castleScreen") {
-          castleScreens.push(child);
+          // const helper = new THREE.BoxHelper(child, 0xff0000);
+          // scene.add(helper);
         }
         if (child.name === "castlePanel") {
           castlePanels.push(child);
+        }
+        if (child.name === "castleScreen") {
+          castleScreens.push(child);
         }
       }
     });
@@ -320,6 +322,8 @@ function animate() {
     }
     
     for (let wall of castleWalls) {
+      // Skip walls that are flagged as non-blocking.
+      if (wall.userData.blockCollision === false) continue;
       let box = new THREE.Box3().setFromObject(wall);
       box.expandByScalar(1.0);
       if (box.containsPoint(rock.mesh.position)) {
@@ -354,24 +358,27 @@ function animate() {
 }
 
 function collides(pos) {
-  if (
-    pos.x < -250 + playerRadius ||
-    pos.x > 250 - playerRadius ||
-    pos.z < -250 + playerRadius ||
-    pos.z > 250 - playerRadius
-  )
-    return true;
-  if (
-    obstacles.some(
-      obs => pos.distanceTo(new THREE.Vector3(obs.x, pos.y, obs.z)) < playerRadius + obs.radius
-    )
-  )
-    return true;
+  // Use the player's radius as a margin to expand the wall's collider
+  const margin = playerRadius;
   for (let wall of castleWalls) {
-    let box = new THREE.Box3().setFromObject(wall);
-    // Reduced expansion from 0.5 to 0.2
-    box.expandByScalar(0.2);
-    if (box.containsPoint(pos)) return true;
+    if (wall.userData.blockCollision === false) continue;
+    wall.updateMatrixWorld(true);
+    if (!wall.userData.collider) continue;
+    
+    // Compute inverse matrix so we can transform pos into the wall’s local space.
+    const invMatrix = new THREE.Matrix4().copy(wall.matrixWorld).invert();
+    const localPos = pos.clone().applyMatrix4(invMatrix);
+    
+    const half = wall.userData.collider.halfSize;
+    // Expand the bounds by the player's radius so the collider effectively grows.
+    if (
+      Math.abs(localPos.x) <= (half.x + margin) &&
+      Math.abs(localPos.y) <= (half.y + margin) &&
+      Math.abs(localPos.z) <= (half.z + margin)
+    ) {
+      console.log("Collision with wall:", wall.name);
+      return true;
+    }
   }
   return false;
 }
