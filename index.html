@@ -1270,8 +1270,9 @@
     }
       
       function isOverWater(pos) {
-        // For example, assume island radius = 200.
-        return Math.sqrt(pos.x * pos.x + pos.z * pos.z) > 200;
+        // The island covers from -250 to 250 so the rock is over water
+        // only if it is outside these bounds.
+        return Math.abs(pos.x) > 250 || Math.abs(pos.z) > 250;
       }
       
       function animate() {
