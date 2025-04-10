@@ -16,6 +16,7 @@
         #blocker {
           position: absolute;
           top: 0;
+          color: #ffffff;
           left: 0;
           width: 100%;
           height: 100%;
@@ -25,135 +26,8 @@
           justify-content: center;
           z-index: 100;
         }
-        #instructions {
-          font-size: 24px;
-          color: #fff;
-          text-align: center;
-          cursor: pointer;
-        }
-        /* Rock counter UI */
-        #rockCounter {
-          position: absolute;
-          top: 20px;
-          right: 20px;
-          background: rgba(0, 0, 0, 0.7);
-          padding: 8px 12px;
-          border-radius: 10px;
-          font-size: 20px;
-          color: #fff;
-          z-index: 101;
-          display: flex;
-          align-items: center;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-        }
-        #rockCounter img {
-          width: 24px;
-          height: 24px;
-          margin-right: 8px;
-        }
-        /* Modern Castle Health Bar (hidden until castle is built) */
-        #castleHealthContainer {
-          position: absolute;
-          top: 20px;
-          left: 20px;
-          width: 250px;
-          height: 30px;
-          background: #222;
-          border-radius: 15px;
-          z-index: 101;
-          display: none;
-          padding: 5px 10px;
-          box-sizing: border-box;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-          align-items: center;
-        }
-        #castleHealthContainer span {
-          color: #fff;
-          font-size: 16px;
-          margin-right: 10px;
-        }
-        #castleHealthBar {
-          width: 100%;
-          height: 100%;
-          background: limegreen;
-          border-radius: 10px;
-          transition: width 0.3s ease;
-        }
-        /* Game Over UI */
-        #gameOver {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          font-size: 64px;
-          color: red;
-          z-index: 104;
-          display: none;
-        }
-        /* Castle Build Popup with custom fancy cursor */
-        #castlePopup {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0, 0, 0, 0.7);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 102;
-          display: none;
-          cursor: url('https://img.icons8.com/color/48/000000/cursor.png'), auto;
-        }
-        #castlePopup .modalContent {
-          background: #fff;
-          padding: 20px 30px;
-          border-radius: 10px;
-          text-align: center;
-          width: 300px;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        #castlePopup .modalContent h2 {
-          margin: 0 0 20px;
-          font-size: 24px;
-          color: #333;
-        }
-        #castlePopup .modalContent img {
-          max-width: 200px;
-          width: 100%;
-          display: block;
-          margin: 0 auto 20px;
-        }
-        #castlePopup .modalContent button {
-          background: linear-gradient(45deg, #ff7f50, #ff4500);
-          border: none;
-          color: #fff;
-          padding: 12px 24px;
-          border-radius: 8px;
-          font-size: 20px;
-          font-weight: bold;
-          cursor: inherit;
-          transition: transform 0.2s, box-shadow 0.2s;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        }
-        #castlePopup .modalContent button:hover {
-          transform: scale(1.05);
-          box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
-        }
-        /* Invasion Countdown HUD */
-        #invasionCountdown {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          font-size: 48px;
-          color: #fff;
-          z-index: 103;
-          text-align: center;
-          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
-          white-space: nowrap;
-        }
+
+      
         /* New styles for panel popup HUD with epic custom cursor */
         #panelPopup {
           position: fixed;
@@ -747,27 +621,26 @@
         });
       
         const panelImages = [
-          "https://cloudfitsoftware.com/img/industries.jpg",
-          "https://img001.prntscr.com/file/img001/9dVErP-PTza0U3uLZ5K37w.jpg",
-          "https://img001.prntscr.com/file/img001/zifsTPjbTEWjA6rFBzgw2A.png",
-          "https://img001.prntscr.com/file/img001/rsFf4BfnTqCbLPVH4sv4Ew.png",
-          "https://img001.prntscr.com/file/img001/mOjQSsMoSpSEN-fcplC21A.png",
-          "https://img001.prntscr.com/file/img001/Mbk62OcASlOdvlA7VNBiqg.png",
-          "https://img001.prntscr.com/file/img001/x2br0DK2QdSwRA7_yH6oGQ.jpg",
-          "https://img001.prntscr.com/file/img001/I4iIfEPeRnCKE5pBe852Jg.png",
-          "https://img001.prntscr.com/file/img001/Fb2mLOYuROGJv2UgOTBO1w.png"
+          "https://img001.prntscr.com/file/img001/_3zevHnzSBinz6l0gZQzSg.jpg",
+          "https://img001.prntscr.com/file/img001/BwCAk_KWQXW9uBuV827Agg.jpg",
+          "https://img001.prntscr.com/file/img001/7_AIcSr3SFmr-HKgjL3JHw.jpg",
+          "https://img001.prntscr.com/file/img001/Gwfp4qs4QTC_R2-RiH2wHA.jpg",
+          "https://img001.prntscr.com/file/img001/p1JnvUtpRTKac84i5pVT8A.jpg",
+          "https://img001.prntscr.com/file/img001/HQ7FyHKlQaK0okaXn34qjQ.jpg",
+          "https://img001.prntscr.com/file/img001/3iP-vC_8QWWFq2S48GLMKA.jpg",
+          "https://img001.prntscr.com/file/img001/mIqpwceWTZizVlYd9hVc8Q.jpg",
+          "https://img001.prntscr.com/file/img001/Pr63Ada5TrOo3gVOUti6hw.jpg"
         ];
-        // New array of panel URLs (total 9, 3 per castle)
         const panelLinks = [
-          "https://img001.prntscr.com/file/img001/m5QkMEqvTnaeZOlWxLyixw.png",
-          "https://img001.prntscr.com/file/img001/FB_LYCG4Rt6E8FGYuamDnA.png",
-          "https://img001.prntscr.com/file/img001/xcnYIvpQRFS9cezg0pCbnQ.jpg",
-          "https://img001.prntscr.com/file/img001/kLO50ucpSQmhW_sRrukV0w.png",
-          "https://img001.prntscr.com/file/img001/23BxRpb-S1Ov7JJEBDcHIA.png",
-          "https://castle2-site3.com/",
-          "https://img001.prntscr.com/file/img001/d4-DoqV1StmxAGv_ONfYqQ.png",
-          "https://img001.prntscr.com/file/img001/UhOfqHLvRCCX21jaGm7HrQ.png",
-          "https://img001.prntscr.com/file/img001/PnZgJup2Q1CJvrVHAQVRYQ.png"
+          "https://gemini.google.com/app",
+          "https://example.com/panel-link-2",
+          "https://example.com/panel-link-3",
+          "https://gemini.google.com/app",
+          "https://example.com/panel-link-5",
+          "https://example.com/panel-link-6",
+          "https://example.com/panel-link-7",
+          "https://example.com/panel-link-8",
+          "https://example.com/panel-link-9"
         ];
       
         const panelY = floorThickness + 25;
@@ -1075,19 +948,7 @@
       
       // --- Updated popup functions ---
       function showPanelPopup(url) {
-        // If the URL does not end with .png or .jpg, open it in a new tab.
-        if (!url.match(/\.(png|jpg)$/i)) {
-          window.open(url, '_blank');
-          return;
-        }
-        // Exit pointer lock immediately so that the mouse cursor is free over the popup.
-        if (document.pointerLockElement) {
-          document.exitPointerLock();
-        }
-        const popup = document.getElementById("panelPopup");
-        const image = document.getElementById("panelImage");
-        image.src = url;
-        popup.style.display = "flex";
+        window.open(url, '_blank');
       }
       
       function hidePanelPopup() {
@@ -1414,10 +1275,10 @@
         bgGradient.addColorStop(0, "#4b0000");
         bgGradient.addColorStop(1, "#1a0000");
         ctx.fillStyle = bgGradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, 256, 48);
         ctx.lineWidth = 4;
         ctx.strokeStyle = "#C9B037";
-        ctx.strokeRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeRect(0, 0, 256, 48);
         ctx.font = "bold 24px 'Old English Text MT', 'Uncial Antiqua', serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -1427,13 +1288,13 @@
         ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
         ctx.lineWidth = 1;
         ctx.strokeStyle = "#000000";
-        ctx.strokeText(text, canvas.width / 2, canvas.height / 2);
-        const textGradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+        ctx.strokeText(text, 128, 24);
+        const textGradient = ctx.createLinearGradient(0, 0, 256, 0);
         textGradient.addColorStop(0, "#fff1a8");
         textGradient.addColorStop(0.5, "#FFD700");
         textGradient.addColorStop(1, "#b8860b");
         ctx.fillStyle = textGradient;
-        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+        ctx.fillText(text, 128, 24);
         const texture = new THREE.CanvasTexture(canvas);
         texture.needsUpdate = true;
         const geometry = new THREE.PlaneGeometry(80, 15);
