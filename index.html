@@ -1145,6 +1145,135 @@
         }
       }
       
+      // Modified spawnSplash function with a smaller splash and an upward splash effect
+      function spawnSplash(pos) {
+        // Create canvas for the splash texture.
+        const splashCanvas = document.createElement('canvas');
+        splashCanvas.width = 256;
+        splashCanvas.height = 256;
+        const ctx = splashCanvas.getContext('2d');
+        const center = 128;
+    
+        // --- Draw the initial splash pattern (foam and droplets) ---
+        function drawInitialSplash() {
+            ctx.clearRect(0, 0, 256, 256); // Clear canvas
+            const gradient = ctx.createRadialGradient(center, center, 0, center, center, center * 0.5);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+            gradient.addColorStop(0.3, 'rgba(200, 220, 255, 0.7)');
+            gradient.addColorStop(0.6, 'rgba(180, 210, 255, 0.4)');
+            gradient.addColorStop(1, 'rgba(150, 200, 255, 0.1)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(center, center, center * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+    
+            const numDroplets = 8 + Math.floor(Math.random() * 10);
+            ctx.fillStyle = 'rgba(200, 220, 255, 0.6)';
+            for (let i = 0; i < numDroplets; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * center * 0.4 + center * 0.05;
+                const x = center + Math.cos(angle) * radius;
+                const y = center + Math.sin(angle) * radius;
+                const size = Math.random() * 2.0 + 1;
+                ctx.beginPath();
+                ctx.ellipse(x, y, size * (0.8 + Math.random() * 0.4), size * (0.8 + Math.random() * 0.4), Math.random() * Math.PI, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    
+        drawInitialSplash(); // Draw the initial state
+    
+        const splashTexture = new THREE.CanvasTexture(splashCanvas);
+    
+        // --- Create Plane Geometry and Mesh (for the main splash) ---
+        const planeSize = 30; // Smaller overall plane size
+        const splashGeo = new THREE.PlaneGeometry(planeSize, planeSize);
+        const splashMaterial = new THREE.MeshBasicMaterial({
+            map: splashTexture,
+            transparent: true,
+            side: THREE.DoubleSide,
+            depthWrite: false
+        });
+        const splashMesh = new THREE.Mesh(splashGeo, splashMaterial);
+        splashMesh.position.copy(pos);
+        splashMesh.position.y = pos.y + 0.01;
+        splashMesh.rotation.x = -Math.PI / 2;
+        // Animate from a small scale to a moderate size.
+        const initialScale = 0.05;
+        const finalScale = 0.5 * planeSize; 
+        splashMesh.scale.set(initialScale, initialScale, initialScale);
+        scene.add(splashMesh);
+    
+        // --- Create a secondary upward splash mesh ---
+        const splashUpMesh = splashMesh.clone();
+        // Give it its own material instance.
+        splashUpMesh.material = splashMaterial.clone();
+        splashUpMesh.position.copy(pos);
+        splashUpMesh.position.y += 0.01; // start just above the water
+        scene.add(splashUpMesh);
+    
+        const mainDuration = 1500; // Duration for the main splash effect
+        const upDuration = 800;    // Duration for the upward splash
+        let elapsed = 0;
+        const interval = 16; // roughly 60fps
+        const maxOpacity = 0.95;
+    
+        const anim = setInterval(() => {
+            elapsed += interval;
+            const t = Math.min(elapsed / mainDuration, 1.0);
+            // --- Animate main splash scale and opacity ---
+            const scaleProgress = t * (2 - t); // EaseOutQuad
+            const currentScale = initialScale + (finalScale - initialScale) * scaleProgress;
+            splashMesh.scale.set(currentScale, currentScale, currentScale);
+            splashMaterial.opacity = maxOpacity * (1.0 - t * t);
+    
+            // --- Redraw texture for ripple effect ---
+            drawInitialSplash();
+            const rippleMaxRadius = center;
+            const rippleThickness = 3;
+            const numRipples = 2;
+            for (let i = 0; i < numRipples; i++) {
+                const rippleT = Math.max(0, t * 1.2 - i * 0.2);
+                if (rippleT > 0 && rippleT <= 1) {
+                    const currentRadius = rippleMaxRadius * rippleT;
+                    const rippleOpacity = (1.0 - rippleT) * 0.7;
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${rippleOpacity})`;
+                    ctx.lineWidth = rippleThickness * (1.0 - rippleT * 0.5);
+                    ctx.beginPath();
+                    ctx.arc(center, center, currentRadius, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+            splashTexture.needsUpdate = true;
+    
+            // --- Animate upward splash effect separately ---
+            const tUp = Math.min(elapsed / upDuration, 1.0);
+            // Move upward by a small amount (e.g. 2 units)
+            splashUpMesh.position.y = pos.y + 0.01 + 2 * tUp;
+            // Fade upward splash faster
+            splashUpMesh.material.opacity = maxOpacity * (1 - tUp);
+    
+            // --- Clean up ---
+            if (t >= 1.0 && tUp >= 1.0) {
+                clearInterval(anim);
+                if (splashMesh.parent === scene) {
+                    scene.remove(splashMesh);
+                }
+                if (splashUpMesh.parent === scene) {
+                    scene.remove(splashUpMesh);
+                }
+                if (splashGeo) splashGeo.dispose();
+                if (splashMaterial) splashMaterial.dispose();
+                if (splashTexture) splashTexture.dispose();
+            }
+        }, interval);
+    }
+      
+      function isOverWater(pos) {
+        // For example, assume island radius = 200.
+        return Math.sqrt(pos.x * pos.x + pos.z * pos.z) > 200;
+      }
+      
       function animate() {
         requestAnimationFrame(animate);
         const t = performance.now();
@@ -1183,17 +1312,44 @@
           }
         }
       
+        // Define the water (ocean) level – the ocean plane sits at y = 0.
+        const waterLevel = 0;
+      
         for (let i = thrownRocks.length - 1; i >= 0; i--) {
           let rock = thrownRocks[i];
           rock.mesh.position.add(rock.velocity.clone().multiplyScalar(delta));
           rock.velocity.y -= GRAVITY * delta * 0.5;
-          let groundY = getTerrainHeight(rock.mesh.position.x, rock.mesh.position.z) + 2.5;
-          if (rock.mesh.position.y <= groundY || rock.velocity.length() < 2.0) {
-            rock.mesh.position.y = groundY;
-            obstacles.push({ type: "rock", mesh: rock.mesh, radius: 5 });
-            thrownRocks.splice(i, 1);
-            continue;
+      
+          // Check if the rock enters the water zone
+          if (rock.mesh.position.y <= waterLevel + 2.5 && isOverWater(rock.mesh.position)) {
+            // Water branch: trigger splash once then let it fall through.
+            if (!rock.hasSplashed) {
+              rock.hasSplashed = true;
+              spawnSplash(rock.mesh.position);
+            }
+            if (rock.mesh.position.y < waterLevel - 30) {
+              scene.remove(rock.mesh);
+              thrownRocks.splice(i, 1);
+              continue;
+            }
+          } else {
+            // For ground collision, decide if we're on island vs. water.
+            let groundY;
+            if (isOverWater(rock.mesh.position)) {
+              // Over water but not deep enough yet – let it fall lower.
+              groundY = waterLevel + 2.5;
+            } else {
+              groundY = getTerrainHeight(rock.mesh.position.x, rock.mesh.position.z) + 2.5;
+            }
+            if (rock.mesh.position.y <= groundY || rock.velocity.length() < 2.0) {
+              rock.mesh.position.y = groundY;
+              obstacles.push({ type: "rock", mesh: rock.mesh, radius: 5 });
+              thrownRocks.splice(i, 1);
+              continue;
+            }
           }
+      
+          // Collision detection with castle walls remains unchanged.
           for (let wall of castleWalls) {
             if (wall.userData.blockCollision === false) continue;
             let box = new THREE.Box3().setFromObject(wall);
